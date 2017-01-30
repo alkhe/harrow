@@ -3,8 +3,10 @@ const { arr, start, pair } = require('./arrow')
 const log = console.log.bind(console)
 
 const add = (x, y) => x + y
+const mul = (x, y) => x * y
+
 const plus_3 = start.map(x => x + 3) // or arr(x => x + 3)
-const square = start.join((x, y) => x * y)
+const square = start.join(mul)
 
 // point-free definition of hypot
 const hypot = start.both(square).apply(add).map(Math.sqrt)
