@@ -15,7 +15,7 @@ function run(c, x) {
 
 const to_c = fa => fa instanceof Arrow
 	? fa.c
-	: List(fa)
+	: List([fa])
 
 Arrow.prototype.enroll = function(c) {
 	return new Arrow(this.c.concat(c))
@@ -108,11 +108,8 @@ const arr = f => new Arrow(List([f]))
 
 const start = new Arrow(List())
 
-const pairwise = new Arrow(List([xs => pair.apply(null, xs)]))
-
 module.exports = {
 	arr,
 	start,
-	pairwise,
 	pair
 }

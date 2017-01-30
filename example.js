@@ -1,4 +1,4 @@
-const { arr, start, pairwise, pair } = require('./arrow')
+const { arr, start, pair } = require('./arrow')
 
 const add = (x, y) => x + y
 const plus_3 = start.map(x => x + 3) // or arr(x => x + 3)
