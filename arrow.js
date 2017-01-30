@@ -1,6 +1,8 @@
 // TODO
 // consider using `id` for `start`
 
+const { List } = require('immutable')
+
 function Arrow(computation) {
 	this.c = computation
 }
@@ -8,10 +10,7 @@ function Arrow(computation) {
 const pair = (l, r) => ({ l, r })
 
 function run(c, x) {
-	for (let i = 0; i < c.length; i++) {
-		x = c[i](x)
-	}
-	return x
+	return c.reduce((x, f) => f(x), x)
 }
 
 const to_c = fa => fa instanceof Arrow
@@ -103,11 +102,11 @@ register('loop', a => {
 	]
 })
 
-const arr = f => new Arrow([f])
+const arr = f => new Arrow(List([f]))
 
-const start = new Arrow([])
+const start = new Arrow(List())
 
-const pairwise = new Arrow([xs => pair.apply(null, xs)])
+const pairwise = new Arrow(List([xs => pair.apply(null, xs)]))
 
 module.exports = {
 	arr,

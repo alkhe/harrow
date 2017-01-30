@@ -15,4 +15,3 @@ console.log(plus_3.run(3))
 console.log(square.run(4))
 console.log(hypot.run(pair(3, 4)))
 console.log(hypot2(3, 4))
-
