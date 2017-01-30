@@ -1,5 +1,12 @@
 {
   "dependencies": {
     "immutable": "^3.8.1"
-  }
+  },
+  "name": "harrow",
+  "version": "0.1.0",
+  "description": "Advanced functional combinators for Javascript.",
+  "main": "./arrow.js",
+  "repository": "https://github.com/edge/harrow",
+  "author": "edge <functaire@gmail.com>",
+  "license": "MIT"
 }
