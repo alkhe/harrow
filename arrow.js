@@ -15,7 +15,7 @@ function run(c, x) {
 
 const to_c = fa => fa instanceof Arrow
 	? fa.c
-	: [fa]
+	: List(fa)
 
 Arrow.prototype.enroll = function(c) {
 	return new Arrow(this.c.concat(c))
@@ -62,7 +62,9 @@ register_static('swap', [({ l, r }) => pair(r, l)])
 register_static('tap', [x => (console.log(x), x)])
 
 const apply = a => {
-	const [head, ...rest] = to_c(a)
+	const c = to_c(a)
+	const head = c.first()
+	const rest = c.rest()
 	return [
 		({ l, r }) => run(rest, head(l, r))
 	]
