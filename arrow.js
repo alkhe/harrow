@@ -1,132 +1,117 @@
 // TODO
-// trampoline composition/run to prevent stack overflow
-// skip recognized `id`s in eval stage
+// consider using `id` for `start`
 
-function Arrow(f) {
-	this.run = f
+function Arrow(computation) {
+	this.c = computation
 }
 
-function Pair(a, b) {
-	this.l = a
-	this.r = b
+const pair = (l, r) => ({ l, r })
+
+function run(c, x) {
+	for (let i = 0; i < c.length; i++) {
+		x = c[i](x)
+	}
+	return x
 }
 
-const to_f = f_or_a => f_or_a instanceof Arrow
-	? f_or_a.run
-	: f_or_a
+const to_c = fa => fa instanceof Arrow
+	? fa.c
+	: [fa]
 
-const id = x => x
-
-Arrow.prototype.map = function(a) {
-	const pre = this.run
-	const f = to_f(a)
-
-	return new Arrow(x => f(pre(x)))
+Arrow.prototype.enroll = function(c) {
+	return new Arrow(this.c.concat(c))
 }
 
-Arrow.prototype.fork = function() {
-	const pre = this.run
-
-	return new Arrow(x => {
-		const r = pre(x)
-		return new Pair(r, r)
-	})
+Arrow.prototype.run = function(x) {
+	return run(this.c, x)
 }
 
-Arrow.prototype.first = function(a) {
-	const pre = this.run
-	const f = to_f(a)
-
-	return new Arrow(x => {
-		const { l, r } = pre(x)
-		return new Pair(f(l), r)
-	})
+const register = (name, f) => {
+	Arrow.prototype[name] = function() {
+		return this.enroll(f.apply(null, arguments))
+	}
 }
 
-Arrow.prototype.second = function(a) {
-	const pre = this.run
-	const f = to_f(a)
-
-	return new Arrow(x => {
-		const { l, r } = pre(x)
-		return new Pair(l, f(r))
-	})
+const register_static = (name, c) => {
+	Arrow.prototype[name] = function() {
+		return this.enroll(c)
+	}
 }
 
-Arrow.prototype.swap = function() {
-	const pre = this.run
+// seq, then
+register('map', to_c)
 
-	return new Arrow(x => {
-		const { l, r } = pre(x)
-		return new Pair(r, l)
-	})
+const fork = x => pair(x, x)
+register_static('fork', [fork])
+
+register('first', a => {
+	const c = to_c(a)
+	return [
+		({ l, r }) => pair(run(c, l), r)
+	]
+})
+
+register('second', a => {
+	const c = to_c(a)
+	return [
+		({ l, r }) => pair(l, run(c, r))
+	]
+})
+
+register_static('swap', [({ l, r }) => pair(r, l)])
+
+register_static('tap', [x => (console.log(x), x)])
+
+const apply = a => {
+	const [head, ...rest] = to_c(a)
+	return [
+		({ l, r }) => run(rest, head(l, r))
+	]
 }
 
-Arrow.prototype.tap = function() {
-	const pre = this.run
+register('apply', apply)
 
-	return new Arrow(x => {
-		const r = pre(x)
-		console.log(r)
-		return r
-	})
+register('join', a => [fork].concat(apply(a)))
+
+const para = (a, b) => {
+	const c = to_c(a)
+	const d = to_c(b)
+	return [
+		({ l, r }) => pair(run(c, l), run(d, r))
+	]
 }
+register('para', para)
 
-Arrow.prototype.apply = function(a) {
-	const pre = this.run
-	const f = to_f(a)
+register('both', a => para(a, a))
 
-	return new Arrow(x => {
-		const { l, r } = pre(x)
-		return f(l, r)
-	})
-}
+register_static('assoc', [
+	({ l: { l: ll, r: lr }, r }) => pair(ll, pair(lr, r))
+])
 
-Arrow.prototype.join = function(a) {
-	return this.fork().apply(a)
-}
+register('loop', a => {
+	const c = to_c(a)
+	return [
+		x => {
+			let end = false
 
-Arrow.prototype.para = function(a, b) {
-	const pre = this.run
-	const f = to_f(a)
-	const g = to_f(b)
+			while (!end) {
+				[x, end] = run(c, x)
+			}
 
-	return new Arrow(x => {
-		const { l, r } = pre(x)
-		return new Pair(f(l), g(r))
-	})
-}
-
-Arrow.prototype.assoc = function() {
-	const pre = this.run
-
-	return new Arrow(x => {
-		const { l: { l: ll, r: lr }, r } = pre(x)
-		return new Pair(ll, new Pair(lr, r))
-	})
-}
-
-Arrow.prototype.loop = function(a) {
-	const pre = this.run
-	const f = to_f(a)
-
-	return new Arrow(x => {
-		let r = pre(x)
-		let end = false
-
-		while (!end) {
-			[r, end] = f(r)
+			return x
 		}
+	]
+})
 
-		return r
-	})
-}
+const arr = f => new Arrow([f])
 
-const arr = f => new Arrow(f)
+const start = new Arrow([])
 
-const start = arr(id)
+const pairwise = new Arrow([xs => pair.apply(null, xs)])
 
 module.exports = {
 	arr,
-	start
+	start,
+	pairwise,
+	pair
 }
